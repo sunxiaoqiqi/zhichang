@@ -64,18 +64,20 @@ export function CoursePlayer({
 
   useEffect(() => {
     const saved = window.localStorage.getItem(`course-lesson-${lessonNumber}`);
-    if (!saved) {
-      setHydrated(true);
-      return;
-    }
     try {
+      if (!saved) throw new Error("no local progress");
       const state = JSON.parse(saved) as { completed?: number[]; unlocked?: number };
       if (Array.isArray(state.completed)) setCompleted(state.completed);
       if (typeof state.unlocked === "number") setUnlocked(Math.min(state.unlocked, steps.length - 1));
     } catch {
+      if (!saved) { /* continue with remote progress */ }
+      else
       window.localStorage.removeItem(`course-lesson-${lessonNumber}`);
     }
-    setHydrated(true);
+    fetch("/api/progress").then(async response => response.ok ? response.json() : null).then((data: { progress?: Array<{ lessonNumber: number; completed: number[]; unlocked: number }> } | null) => {
+      const remote = data?.progress?.find((item) => item.lessonNumber === lessonNumber);
+      if (remote) { setCompleted(remote.completed); setUnlocked(Math.min(remote.unlocked, steps.length - 1)); }
+    }).finally(() => setHydrated(true));
   }, [lessonNumber, steps.length]);
 
   useEffect(() => {
@@ -87,6 +89,7 @@ export function CoursePlayer({
       updatedAt: Date.now(),
     }));
     window.dispatchEvent(new Event("course-progress"));
+    void fetch("/api/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ lessonNumber, completed, unlocked, finished: completed.length === steps.length }) });
   }, [completed, hydrated, lessonNumber, steps.length, unlocked]);
 
   useEffect(() => {

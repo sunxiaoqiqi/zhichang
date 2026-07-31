@@ -11,6 +11,7 @@ const emptyHistory: TrainingHistory = { questions: [], scenes: [], recentQuestio
 export function assembleTrainingSession(
   history: TrainingHistory = emptyHistory,
   random: Random = Math.random,
+  questionBank: TrainingQuestion[] = trainingQuestions,
 ): TrainingQuestion[] {
   const questionHistory = new Map(history.questions.map((item) => [item.questionId, item]));
   const sceneHistory = new Map(history.scenes.map((item) => [item.sceneId, item]));
@@ -30,7 +31,7 @@ export function assembleTrainingSession(
   };
 
   for (const [kind, count] of Object.entries(SESSION_MIX) as Array<[QuestionKind, number]>) {
-    const candidates = trainingQuestions
+    const candidates = questionBank
       .filter((question) => question.status === "published" && question.kind === kind)
       .sort((a, b) => score(b) - score(a));
     for (const question of candidates.slice(0, count)) {

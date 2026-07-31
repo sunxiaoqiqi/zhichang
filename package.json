@@ -12,7 +12,8 @@
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0000_boring_starbolt.sql --config dist/server/wrangler.json --persist-to .wrangler/state"
+    "db:migrate:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0000_boring_starbolt.sql --config dist/server/wrangler.json --persist-to .wrangler/state",
+    "db:migrate:v2:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0001_small_guardian.sql --config dist/server/wrangler.json --persist-to .wrangler/state"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

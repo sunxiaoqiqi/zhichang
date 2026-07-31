@@ -15,15 +15,13 @@ export default function TrainingPage() {
   const [sessionDone, setSessionDone] = useState(false);
 
   useEffect(() => {
-    try {
-      const history = JSON.parse(window.localStorage.getItem("training-history") ?? "null") as TrainingHistory | null;
-      setQuestions(assembleTrainingSession(history ?? undefined));
-      setFavorites(JSON.parse(window.localStorage.getItem("training-favorites") ?? "[]"));
-    } catch {
-      window.localStorage.removeItem("training-favorites");
-      window.localStorage.removeItem("training-history");
-      setQuestions(assembleTrainingSession());
-    }
+    Promise.all([fetch("/api/training/questions"),fetch("/api/training/favorites")]).then(async ([questionResponse,favoriteResponse])=>{
+      if(!questionResponse.ok) throw new Error("question api unavailable");
+      const data=await questionResponse.json() as {questions:TrainingQuestion[];history:TrainingHistory};
+      const favoriteData=await favoriteResponse.json() as {favorites:string[]};
+      setQuestions(data.questions.length?assembleTrainingSession(data.history,Math.random,data.questions):[]);
+      setFavorites(favoriteData.favorites??[]);
+    }).catch(()=>{try{const history=JSON.parse(window.localStorage.getItem("training-history")??"null") as TrainingHistory|null;setQuestions(assembleTrainingSession(history??undefined));setFavorites(JSON.parse(window.localStorage.getItem("training-favorites")??"[]"))}catch{setQuestions(assembleTrainingSession())}});
   }, []);
 
   const question = questions[active];
@@ -34,11 +32,13 @@ export default function TrainingPage() {
     const next = favorites.includes(question.id) ? favorites.filter((id) => id !== question.id) : [...favorites, question.id];
     setFavorites(next);
     window.localStorage.setItem("training-favorites", JSON.stringify(next));
+    void fetch("/api/training/favorites",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({questionId:question.id,favorite:!favorites.includes(question.id)})});
   };
 
   const markComplete = (correct = true) => {
     if (!question || completed.includes(question.id)) return;
     setCompleted((value) => [...value, question.id]);
+    void fetch("/api/training/questions",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({questionId:question.id,primarySceneId:question.primarySceneId,correct})});
     try {
       const now = Date.now();
       const history = JSON.parse(window.localStorage.getItem("training-history") ?? "null") as TrainingHistory | null;
@@ -82,7 +82,7 @@ export default function TrainingPage() {
     <header className="trainingHeader">
       <a className="brand" href="/"><span className="brandMark">61</span><span>职场沟通训练营</span></a>
       <div className="trainingHeaderTitle"><small>系统组卷 · 每次 5 题</small><strong>训练模式</strong></div>
-      <div className="trainingProgress"><span>{progress}%</span><div><i style={{ width: `${progress}%` }} /></div></div>
+      <div className="trainingHeaderActions"><a href="/training/favorites">★ 我的收藏 <b>{favorites.length}</b></a><div className="trainingProgress"><span>{progress}%</span><div><i style={{ width: `${progress}%` }} /></div></div></div>
     </header>
 
     <nav className="trainingMap" aria-label="本次训练进度">

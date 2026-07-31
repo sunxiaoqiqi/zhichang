@@ -1,0 +1,6 @@
+import { and, eq } from "drizzle-orm";
+import { getDb } from "../../../db";
+import { courseProgress } from "../../../db/schema";
+import { getCurrentUser } from "../../auth/session";
+export async function GET(){const user=await getCurrentUser();if(!user)return Response.json({error:"请先登录"},{status:401});const rows=await getDb().select().from(courseProgress).where(eq(courseProgress.userId,user.id));return Response.json({progress:rows.map(r=>({...r,completed:JSON.parse(r.completedSteps),unlocked:r.unlockedStep}))})}
+export async function POST(request:Request){const user=await getCurrentUser();if(!user)return Response.json({error:"请先登录"},{status:401});const b=await request.json() as {lessonNumber:number;completed:number[];unlocked:number;finished:boolean};const [old]=await getDb().select({id:courseProgress.id}).from(courseProgress).where(and(eq(courseProgress.userId,user.id),eq(courseProgress.lessonNumber,b.lessonNumber))).limit(1);const values={userId:user.id,lessonNumber:b.lessonNumber,completedSteps:JSON.stringify(b.completed),unlockedStep:b.unlocked,finished:b.finished,updatedAt:new Date()};if(old)await getDb().update(courseProgress).set(values).where(eq(courseProgress.id,old.id));else await getDb().insert(courseProgress).values({id:crypto.randomUUID(),...values});return Response.json({ok:true})}

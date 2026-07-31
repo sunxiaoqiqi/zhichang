@@ -30,3 +30,9 @@ test("V1 provides login, password change, setup, and user administration", async
     "app/api/admin/users/[id]/route.ts",
   ]) assert.ok((await read(path)).length > 100, `${path} should be implemented`);
 });
+
+test("V2 persists questions, favorites, attempts, and course progress", async () => {
+  const sql = await read("drizzle/0001_small_guardian.sql");
+  for (const table of ["questions", "training_scenes", "training_attempts", "favorites", "course_progress"]) assert.ok(sql.includes(`CREATE TABLE \`${table}\``), `${table} should be migrated`);
+  for (const path of ["app/api/admin/questions/route.ts", "app/api/training/questions/route.ts", "app/api/training/favorites/route.ts", "app/api/progress/route.ts"]) assert.ok((await read(path)).length > 100);
+});

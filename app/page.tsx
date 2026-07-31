@@ -24,7 +24,7 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
 
-  const readProgress = () => {
+  const readProgress = async () => {
     const next: Record<number, ProgressState> = {};
     for (let number = 1; number <= 26; number += 1) {
       try {
@@ -32,6 +32,13 @@ export default function Home() {
         if (saved) next[number] = JSON.parse(saved) as ProgressState;
       } catch { /* ignore damaged local progress */ }
     }
+    try {
+      const response = await fetch("/api/progress");
+      if (response.ok) {
+        const data = await response.json() as { progress: Array<{ lessonNumber: number; completed: number[]; finished: boolean; updatedAt: string }> };
+        for (const item of data.progress) next[item.lessonNumber] = { completed: item.completed, finished: item.finished, updatedAt: new Date(item.updatedAt).getTime() };
+      }
+    } catch { /* local progress remains available offline */ }
     setProgress(next);
     setReady(true);
   };
