@@ -1,0 +1,1 @@
+"use client"; import { CoursePlayer } from "../components/course-player"; import { lesson14Steps } from "../course-data/lessons-11-15"; export default function Page(){return <CoursePlayer lessonNumber={14} lessonTitle="如何看待领导的口头承诺" steps={lesson14Steps}/>;}

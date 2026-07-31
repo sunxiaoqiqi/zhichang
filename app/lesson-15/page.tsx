@@ -1,0 +1,1 @@
+"use client"; import { CoursePlayer } from "../components/course-player"; import { lesson15Steps } from "../course-data/lessons-11-15"; export default function Page(){return <CoursePlayer lessonNumber={15} lessonTitle="如何拒绝同事帮忙" steps={lesson15Steps}/>;}

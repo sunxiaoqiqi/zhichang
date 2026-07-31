@@ -1,0 +1,1 @@
+"use client"; import { CoursePlayer } from "../components/course-player"; import { lesson12Steps } from "../course-data/lessons-11-15"; export default function Page(){return <CoursePlayer lessonNumber={12} lessonTitle="如何向领导提出不同意见" steps={lesson12Steps}/>;}

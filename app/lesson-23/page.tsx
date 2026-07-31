@@ -1,0 +1,1 @@
+"use client"; import { CoursePlayer } from "../components/course-player"; import { lessonStepsByNumber, lessonTitlesByNumber } from "../course-data/lessons-16-26"; export default function Page(){return <CoursePlayer lessonNumber={23} lessonTitle={lessonTitlesByNumber[23]} steps={lessonStepsByNumber[23]}/>;}

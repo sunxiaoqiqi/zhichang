@@ -1,0 +1,1 @@
+"use client"; import { CoursePlayer } from "../components/course-player"; import { lesson11Steps } from "../course-data/lessons-11-15"; export default function Page(){return <CoursePlayer lessonNumber={11} lessonTitle="被领导误会时如何澄清" steps={lesson11Steps}/>;}
