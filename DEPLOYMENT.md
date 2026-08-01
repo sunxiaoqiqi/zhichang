@@ -1,55 +1,111 @@
-# 职场沟通训练营：上线与运维说明
+# 职场沟通训练营：服务器部署说明
 
-## 运行基线
+## 运行架构
 
-- Node.js `22.13` 或更高版本
-- Cloudflare Workers / Vinext
-- D1 数据库绑定名称：`DB`
-- 健康检查：`GET /api/health`
+- Node.js 22.13 或更高版本
+- 标准 Next.js Node.js 服务
+- 本地 SQLite 数据库（Drizzle ORM + better-sqlite3）
+- nginx 负责 HTTPS 和反向代理
+- systemd 负责进程守护和开机启动
+
+数据库路径由 `DATABASE_PATH` 指定。生产环境必须使用代码目录之外的绝对路径，例如 `/var/lib/zhichang/app.db`，避免更新代码时覆盖数据。
 
 ## 首次部署
 
-1. 安装依赖并生成生产构建：
+```bash
+cd /opt/61shu
+npm ci
+sudo install -d -o www-data -g www-data /var/lib/zhichang /var/backups/zhichang
+DATABASE_PATH=/var/lib/zhichang/app.db npm run db:migrate
+npm run build
+```
 
-   ```bash
-   npm ci
-   npm run build
-   ```
+创建 `/etc/systemd/system/zhichang.service`：
 
-2. 在部署平台创建 D1 数据库，并将绑定名设置为 `DB`。项目的 `.openai/hosting.json` 已声明该绑定。
+```ini
+[Unit]
+Description=Zhichang Training Next.js application
+After=network.target
 
-3. 按顺序执行三份远程数据库迁移：
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/61shu
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+Environment=DATABASE_PATH=/var/lib/zhichang/app.db
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
 
-   ```bash
-   npm run db:migrate:v1:remote
-   npm run db:migrate:v2:remote
-   npm run db:migrate:v3:remote
-   npm run db:migrate:v4:remote
-   ```
+[Install]
+WantedBy=multi-user.target
+```
 
-4. 首次打开 `/setup` 创建管理员。创建成功后，该入口会自动失效。
+启用服务：
 
-5. 使用管理员账号检查：用户管理、设备管理、数据分析、训练题管理和操作审计。
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now zhichang
+sudo systemctl status zhichang
+```
+
+nginx 站点配置：
+
+```nginx
+server {
+    listen 80;
+    server_name book.sunxiaoqi.top;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+验证 nginx 配置后重载，并使用 Certbot 配置 HTTPS。首次访问 `/setup` 创建管理员；创建成功后该入口自动失效。
 
 ## 日常发布
 
-1. 发布前运行 `npm test`。
-2. 数据库结构变化前运行 `npm run db:backup:remote`。
-3. 先执行新增迁移，再发布应用代码。
-4. 发布后访问 `/api/health`，应返回 `status: ok` 与 `database: ok`。
-5. 分别以普通用户和管理员完成一次登录冒烟测试。
+```bash
+cd /opt/61shu
+git pull --ff-only
+npm ci
+DATABASE_PATH=/var/lib/zhichang/app.db npm run db:backup
+DATABASE_PATH=/var/lib/zhichang/app.db npm run db:migrate
+npm run build
+sudo systemctl restart zhichang
+curl --fail http://127.0.0.1:3000/api/health
+```
 
-## 数据与安全口径
+健康检查应返回 `status: ok` 和 `database: ok`。发布后还应分别完成一次普通用户和管理员登录测试。
 
-- 密码只保存 PBKDF2 哈希及随机盐，后台不能读取原密码。
-- 用户以不可变 UUID 作为唯一编号；账号名只用于登录，可修改但不能与其他用户重复。设备、训练和统计均按 UUID 归属。
-- 新建或重置密码时，临时密码仅显示一次。
-- 设备按“账户 + 本地设备标识”唯一汇总；清理浏览器数据后会被识别为新设备。
-- 登录地点来自 Cloudflare 请求头，是近似位置，不是 GPS 精确位置。
-- 有效时长按 60 秒心跳累计；页面隐藏或连续 5 分钟无操作后停止计时。
-- CSV 导出与后台关键操作都会写入操作审计。
+## 备份
+
+在线备份命令不会直接复制正在写入的数据库文件：
+
+```bash
+DATABASE_PATH=/var/lib/zhichang/app.db BACKUP_DIR=/var/backups/zhichang npm run db:backup
+```
+
+建议通过 cron 每天执行，并将备份同步到另一台机器或对象存储。定期清理旧备份并实际演练恢复。不要只备份 `app.db` 而遗漏 WAL 文件；优先使用项目提供的在线备份命令。
+
+## SQLite 运行约束
+
+- 只运行一个 Next.js 应用实例写入该数据库。
+- 不要把数据库放在 NFS 等网络文件系统中。
+- 项目已启用 WAL、外键约束和 5 秒 busy timeout。
+- 若以后需要多实例部署或写入并发明显增长，应迁移到 PostgreSQL。
 
 ## 回滚
 
-- 应用问题：回滚到上一条已验收的 Git 提交并重新发布。
-- 数据问题：停止写入后，用发布前导出的 D1 备份恢复。迁移均为增量操作，不建议直接删除生产表。
+应用问题可切回上一条已验证的 Git 提交，重新构建并重启服务。涉及数据库结构变更时，先停止写入，再使用发布前备份恢复；不要直接删除生产表。

@@ -1,50 +1,39 @@
 {
-  "name": "site-creator-vinext-starter",
+  "name": "zhichang-training",
   "version": "0.1.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vinext dev",
-    "build": "vinext build",
-    "start": "vinext start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0000_boring_starbolt.sql --config dist/server/wrangler.json --persist-to .wrangler/state",
-    "db:migrate:v2:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0001_small_guardian.sql --config dist/server/wrangler.json --persist-to .wrangler/state",
-    "db:migrate:v3:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0002_high_dark_phoenix.sql --config dist/server/wrangler.json --persist-to .wrangler/state",
-    "db:migrate:v4:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0003_narrow_madripoor.sql --config dist/server/wrangler.json --persist-to .wrangler/state",
-    "db:backup:remote": "wrangler d1 export site-creator-d1 --remote --output zhichang-d1-backup.sql --config dist/server/wrangler.json",
-    "db:migrate:v1:remote": "wrangler d1 execute site-creator-d1 --remote --file=drizzle/0000_boring_starbolt.sql --config dist/server/wrangler.json",
-    "db:migrate:v2:remote": "wrangler d1 execute site-creator-d1 --remote --file=drizzle/0001_small_guardian.sql --config dist/server/wrangler.json",
-    "db:migrate:v3:remote": "wrangler d1 execute site-creator-d1 --remote --file=drizzle/0002_high_dark_phoenix.sql --config dist/server/wrangler.json",
-    "db:migrate:v4:remote": "wrangler d1 execute site-creator-d1 --remote --file=drizzle/0003_narrow_madripoor.sql --config dist/server/wrangler.json"
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:backup": "node scripts/backup.mjs",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "better-sqlite3": "^13.0.2",
     "drizzle-orm": "0.45.2",
-    "next": "16.2.6",
+    "next": "16.2.12",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.37.1",
     "@tailwindcss/postcss": "4.2.1",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.2",
-    "@vitejs/plugin-rsc": "0.5.26",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
-    "react-server-dom-webpack": "19.2.6",
+    "eslint-config-next": "16.2.12",
     "tailwindcss": "4.2.1",
-    "typescript": "5.9.3",
-    "vinext": "0.0.50",
-    "vite": "8.0.13",
-    "wrangler": "4.92.0"
+    "typescript": "5.9.3"
   },
   "type": "module"
 }

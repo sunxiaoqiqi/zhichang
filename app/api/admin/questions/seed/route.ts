@@ -11,7 +11,7 @@ export async function POST() {
     let imported = 0;
     for (const item of trainingQuestions) {
       const result = await getDb().insert(questions).values({ id: item.id, title: item.title, kind: item.kind, primarySceneId: item.primarySceneId, difficulty: item.difficulty, status: item.status, payload: JSON.stringify(item), version: item.version }).onConflictDoNothing();
-      imported += result.meta.changes;
+      imported += result.changes;
     }
     const skipped = trainingQuestions.length - imported;
     await getDb().insert(adminAuditLogs).values({ id: crypto.randomUUID(), adminUserId: admin.id, action: "question.seed", detail: JSON.stringify({ imported, skipped }) });

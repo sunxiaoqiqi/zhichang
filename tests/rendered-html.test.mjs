@@ -12,6 +12,17 @@ test("V1 database migration enforces unique accounts and session tokens", async 
   assert.doesNotMatch(sql, /password_plain/);
 });
 
+test("production runtime uses persistent local SQLite instead of Cloudflare D1", async () => {
+  const database = await read("db/index.ts");
+  const packageJson = JSON.parse(await read("package.json"));
+  assert.match(database, /drizzle-orm\/better-sqlite3/);
+  assert.match(database, /journal_mode = WAL/);
+  assert.doesNotMatch(database, /cloudflare:workers|drizzle-orm\/d1/);
+  assert.equal(packageJson.scripts.build, "next build");
+  assert.equal(packageJson.scripts.start, "next start");
+  assert.equal(packageJson.scripts["db:migrate"], "node scripts/migrate.mjs");
+});
+
 test("authentication protects the product and admin routes", async () => {
   const proxy = await read("proxy.ts");
   assert.match(proxy, /getUserBySessionToken/);

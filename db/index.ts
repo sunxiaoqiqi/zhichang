@@ -1,13 +1,32 @@
-import { env } from "cloudflare:workers";
-import { drizzle } from "drizzle-orm/d1";
+import Database from "better-sqlite3";
+import { mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
 
-export function getDb() {
-  if (!env.DB) {
-    throw new Error(
-      "Cloudflare D1 binding `DB` is unavailable. Set the `d1` field in .openai/hosting.json to `DB` or let your control plane inject the real binding values before using the database."
-    );
-  }
+const databasePath = resolve(
+  /* turbopackIgnore: true */ process.env.DATABASE_PATH ?? "data/app.db",
+);
 
-  return drizzle(env.DB, { schema });
+function createDatabase() {
+  mkdirSync(dirname(databasePath), { recursive: true });
+  const client = new Database(databasePath);
+  client.pragma("journal_mode = WAL");
+  client.pragma("foreign_keys = ON");
+  client.pragma("busy_timeout = 5000");
+  return drizzle(client, { schema });
+}
+
+const globalForDatabase = globalThis as typeof globalThis & {
+  __database?: ReturnType<typeof createDatabase>;
+};
+
+const database = globalForDatabase.__database ?? createDatabase();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForDatabase.__database = database;
+}
+
+export function getDb() {
+  return database;
 }

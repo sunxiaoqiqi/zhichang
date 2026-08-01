@@ -17,6 +17,8 @@
 /.next/
 /.vinext/
 /out/
+/data/
+/backups/
 
 # misc
 .DS_Store
@@ -30,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -44,3 +47,6 @@ next-env.d.ts
 dev-output.log
 dev-error.log
 zhichang-d1-backup*.sql
+*.db
+*.db-shm
+*.db-wal
