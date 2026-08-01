@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
+import { AdminNav } from "../components/admin-nav";
 type UserRow = {
   id: string;
   account: string;
@@ -63,28 +64,7 @@ export default function AdminPage() {
   }
   return (
     <main className="adminShell">
-      <aside className="adminNav">
-        <a className="brand" href="/">
-          <span className="brandMark">61</span>
-          <span>管理后台</span>
-        </a>
-        <nav>
-          <a className="active" href="/admin">
-            用户管理
-          </a>
-          <span>设备管理 · V3</span>
-          <span>数据分析 · V3</span>
-          <span>训练题管理 · V2</span>
-        </nav>
-        <button
-          onClick={async () => {
-            await fetch("/api/auth/logout", { method: "POST" });
-            location.href = "/login";
-          }}
-        >
-          退出登录
-        </button>
-      </aside>
+      <AdminNav active="users" />
       <section className="adminMain">
         <header>
           <div>

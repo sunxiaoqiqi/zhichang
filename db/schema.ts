@@ -17,11 +17,66 @@ export const users = sqliteTable("users", {
 export const authSessions = sqliteTable("auth_sessions", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  deviceId: text("device_id"),
   tokenHash: text("token_hash").notNull(),
   expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
   lastSeenAt: integer("last_seen_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
 }, (table) => [uniqueIndex("auth_sessions_token_unique").on(table.tokenHash), index("auth_sessions_user_idx").on(table.userId)]);
+
+export const devices = sqliteTable("devices", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  deviceKey: text("device_key").notNull(),
+  deviceType: text("device_type").notNull().default("unknown"),
+  browser: text("browser").notNull().default("未知浏览器"),
+  os: text("os").notNull().default("未知系统"),
+  userAgent: text("user_agent").notNull().default(""),
+  note: text("note").notNull().default(""),
+  firstSeenAt: integer("first_seen_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
+  lastSeenAt: integer("last_seen_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
+}, (table) => [
+  uniqueIndex("devices_user_key_unique").on(table.userId, table.deviceKey),
+  index("devices_user_idx").on(table.userId),
+  index("devices_last_seen_idx").on(table.lastSeenAt),
+]);
+
+export const loginEvents = sqliteTable("login_events", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+  deviceId: text("device_id").references(() => devices.id, { onDelete: "set null" }),
+  account: text("account").notNull(),
+  deviceKey: text("device_key").notNull().default("unknown"),
+  success: integer("success", { mode: "boolean" }).notNull(),
+  ip: text("ip").notNull().default(""),
+  country: text("country").notNull().default(""),
+  region: text("region").notNull().default(""),
+  city: text("city").notNull().default(""),
+  location: text("location").notNull().default("未知"),
+  userAgent: text("user_agent").notNull().default(""),
+  occurredAt: integer("occurred_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
+}, (table) => [
+  index("login_events_user_idx").on(table.userId),
+  index("login_events_device_idx").on(table.deviceId),
+  index("login_events_occurred_idx").on(table.occurredAt),
+]);
+
+export const activitySessions = sqliteTable("activity_sessions", {
+  id: text("id").primaryKey(),
+  authSessionId: text("auth_session_id").notNull(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  deviceId: text("device_id").references(() => devices.id, { onDelete: "set null" }),
+  startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
+  lastHeartbeatAt: integer("last_heartbeat_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
+  endedAt: integer("ended_at", { mode: "timestamp_ms" }),
+  activeSeconds: integer("active_seconds").notNull().default(0),
+  wasActive: integer("was_active", { mode: "boolean" }).notNull().default(true),
+}, (table) => [
+  uniqueIndex("activity_sessions_auth_unique").on(table.authSessionId),
+  index("activity_sessions_user_idx").on(table.userId),
+  index("activity_sessions_device_idx").on(table.deviceId),
+  index("activity_sessions_started_idx").on(table.startedAt),
+]);
 
 export const adminAuditLogs = sqliteTable("admin_audit_logs", {
   id: text("id").primaryKey(),

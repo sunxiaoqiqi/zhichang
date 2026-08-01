@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../../../db";
-import { adminAuditLogs, authSessions, users } from "../../../../../db/schema";
+import { adminAuditLogs, users } from "../../../../../db/schema";
 import { hashPassword, randomToken } from "../../../../auth/crypto";
-import { getCurrentUser } from "../../../../auth/session";
+import { getCurrentUser, terminateSessionsForUser } from "../../../../auth/session";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const admin = await getCurrentUser();
@@ -16,12 +16,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if (body.action === "toggle") {
     const status = target.status === "active" ? "disabled" : "active";
     await getDb().update(users).set({ status, updatedAt: new Date() }).where(eq(users.id, id));
-    if (status === "disabled") await getDb().delete(authSessions).where(eq(authSessions.userId, id));
+    if (status === "disabled") await terminateSessionsForUser(id);
   } else if (body.action === "reset") {
     temporaryPassword = `Zc${randomToken(6)}9`;
     const secured = await hashPassword(temporaryPassword);
     await getDb().update(users).set({ passwordHash: secured.hash, passwordSalt: secured.salt, mustChangePassword: true, updatedAt: new Date() }).where(eq(users.id, id));
-    await getDb().delete(authSessions).where(eq(authSessions.userId, id));
+    await terminateSessionsForUser(id);
   } else if (body.action === "note") await getDb().update(users).set({ note: body.note?.trim() ?? "", updatedAt: new Date() }).where(eq(users.id, id));
   else return Response.json({ error: "无效操作" }, { status: 400 });
   await getDb().insert(adminAuditLogs).values({ id: crypto.randomUUID(), adminUserId: admin.id, action: `user.${body.action}`, targetUserId: id });

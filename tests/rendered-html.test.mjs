@@ -36,3 +36,18 @@ test("V2 persists questions, favorites, attempts, and course progress", async ()
   for (const table of ["questions", "training_scenes", "training_attempts", "favorites", "course_progress"]) assert.ok(sql.includes(`CREATE TABLE \`${table}\``), `${table} should be migrated`);
   for (const path of ["app/api/admin/questions/route.ts", "app/api/training/questions/route.ts", "app/api/training/favorites/route.ts", "app/api/progress/route.ts"]) assert.ok((await read(path)).length > 100);
 });
+
+test("V3 records devices, login events, and effective activity sessions", async () => {
+  const sql = await read("drizzle/0002_high_dark_phoenix.sql");
+  for (const table of ["devices", "login_events", "activity_sessions"]) assert.ok(sql.includes(`CREATE TABLE \`${table}\``), `${table} should be migrated`);
+  assert.match(sql, /devices_user_key_unique/);
+  assert.match(sql, /active_seconds/);
+  for (const path of [
+    "app/api/activity/heartbeat/route.ts",
+    "app/api/admin/devices/route.ts",
+    "app/api/admin/devices/[id]/route.ts",
+    "app/api/admin/analytics/route.ts",
+    "app/admin/devices/page.tsx",
+    "app/admin/analytics/page.tsx",
+  ]) assert.ok((await read(path)).length > 100, `${path} should be implemented`);
+});

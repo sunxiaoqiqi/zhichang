@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { AdminNav } from "../../components/admin-nav";
 import {
   sceneById,
   trainingScenes,
@@ -90,20 +91,7 @@ export default function QuestionsAdmin() {
   }
   return (
     <main className="adminShell">
-      <aside className="adminNav">
-        <a className="brand" href="/">
-          <span className="brandMark">61</span>
-          <span>管理后台</span>
-        </a>
-        <nav>
-          <a href="/admin">用户管理</a>
-          <a className="active" href="/admin/questions">
-            训练题管理
-          </a>
-          <span>设备管理 · V3</span>
-          <span>数据分析 · V3</span>
-        </nav>
-      </aside>
+      <AdminNav active="questions" />
       <section className="adminMain">
         <header>
           <div>

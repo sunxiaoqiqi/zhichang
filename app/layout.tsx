@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AccountMenu } from "./components/account-menu";
+import { ActivityTracker } from "./components/activity-tracker";
 
 export const metadata: Metadata = {
   title: "61职场沟通训练营｜26个真实职场场景",
@@ -15,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body>{children}<AccountMenu /></body>
+      <body>{children}<AccountMenu /><ActivityTracker /></body>
     </html>
   );
 }

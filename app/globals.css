@@ -5496,3 +5496,136 @@ button {
 .detailQuestion > section button.correct { background: var(--green-soft); border-color: var(--green); color: #356744; }
 .detailQuestion > section button.incorrect { background: #fff0ed; border-color: var(--coral); color: #8e4438; }
 @media (max-width: 760px) { .favoriteFilters { grid-template-columns: 1fr; } .questionDetailHeader { align-items: start; grid-template-columns: 1fr; } .questionDetailHeader > a:last-child { justify-self: start; } .detailQuestion { grid-template-columns: 1fr; } }
+
+/* V3 device management and product analytics */
+.adminMetrics {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 28px 0 16px;
+}
+.adminMetrics.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.adminMetrics article {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: grid;
+  gap: 7px;
+  padding: 18px;
+}
+.adminMetrics article small,
+.analyticsPanel header small,
+.analyticsSection > header small { color: var(--coral-dark); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
+.adminMetrics article strong { font-family: Georgia, "Noto Serif SC", serif; font-size: 27px; }
+.adminMetrics article span { color: var(--muted); font-size: 8px; }
+.adminFilters {
+  align-items: end;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1.7fr 1fr 1fr auto;
+  margin: 16px 0 12px;
+  padding: 14px;
+}
+.adminFilters label { display: grid; gap: 5px; }
+.adminFilters label span { color: var(--muted); font-size: 8px; font-weight: 900; }
+.adminFilters input,
+.adminFilters select,
+.deviceNote,
+.sectionActions input,
+.periodBar input {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 10px;
+  min-width: 0;
+  padding: 10px;
+}
+.adminFilters b { background: var(--blue-soft); border-radius: 7px; font-size: 9px; padding: 11px; white-space: nowrap; }
+.deviceTable td { vertical-align: middle; }
+.deviceTable td:first-child small { align-items: center; display: flex; gap: 5px; }
+.deviceDot { background: #aab0b9; border-radius: 50%; display: inline-block; height: 6px; width: 6px; }
+.deviceDot.online { background: #53a76d; box-shadow: 0 0 0 3px rgba(83,167,109,.14); }
+.deviceNote { max-width: 165px; padding: 8px; width: 100%; }
+.deviceTable button:disabled { cursor: default; opacity: .35; }
+.tableEmpty { color: var(--muted); padding: 35px !important; text-align: center; }
+.periodBar {
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 26px;
+  padding: 8px;
+}
+.periodBar > div,
+.periodBar label,
+.sectionActions { align-items: center; display: flex; gap: 5px; }
+.periodBar button,
+.sectionActions button,
+.tablePagination button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 9px 12px;
+}
+.periodBar button.active,
+.sectionActions button.active { background: var(--ink); color: white; }
+.periodBar label span { color: var(--muted); font-size: 9px; }
+.periodBar label button { background: var(--coral); color: white; }
+.analyticsGrid { display: grid; gap: 12px; grid-template-columns: 1.7fr 1fr; margin: 12px 0; }
+.analyticsPanel,
+.analyticsSection {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+}
+.analyticsPanel > header,
+.analyticsSection > header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 18px; }
+.analyticsPanel h2,
+.analyticsSection h2 { font-family: Georgia, "Noto Serif SC", serif; font-size: 19px; margin: 4px 0 0; }
+.analyticsPanel header > span,
+.analyticsSection > header > span { color: var(--muted); font-size: 8px; }
+.trendChart { align-items: end; display: flex; gap: 7px; height: 155px; }
+.trendChart > div { align-items: center; display: flex; flex: 1; flex-direction: column; height: 100%; justify-content: end; min-width: 0; }
+.trendChart i { background: linear-gradient(180deg, var(--coral), #e69a68); border-radius: 4px 4px 1px 1px; display: block; max-width: 22px; min-height: 8px; width: 65%; }
+.trendChart small { color: var(--muted); font-size: 6px; margin-top: 7px; overflow: hidden; white-space: nowrap; }
+.locationPanel > div { display: grid; gap: 7px; }
+.locationPanel p { align-items: center; background: var(--blue-soft); border-radius: 7px; display: flex; font-size: 9px; justify-content: space-between; margin: 0; padding: 10px; }
+.locationPanel p span { color: #516580; }
+.panelEmpty { align-items: center; color: var(--muted); display: flex; font-size: 10px; height: 140px; justify-content: center; }
+.analyticsSection { margin-top: 12px; }
+.analyticsSection .adminTable { margin-top: 0; }
+.sectionActions input { width: 180px; }
+.analyticsSection code { color: var(--muted); font: 9px Consolas, monospace; }
+.tablePagination { align-items: center; display: flex; gap: 8px; justify-content: center; padding-top: 14px; }
+.tablePagination button { border-color: var(--line); color: var(--ink); }
+.tablePagination button:disabled { opacity: .3; }
+.tablePagination span { color: var(--muted); font-size: 9px; }
+@media (max-width: 980px) {
+  .adminMetrics { grid-template-columns: repeat(2, 1fr); }
+  .adminMetrics.compact { grid-template-columns: repeat(3, 1fr); }
+  .analyticsGrid { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .adminMetrics,
+  .adminMetrics.compact,
+  .adminFilters { grid-template-columns: 1fr; }
+  .periodBar,
+  .analyticsSection > header { align-items: stretch; flex-direction: column; gap: 10px; }
+  .periodBar label,
+  .sectionActions { align-items: stretch; flex-wrap: wrap; }
+  .periodBar input,
+  .sectionActions input { flex: 1; width: auto; }
+  .trendChart > div:nth-child(odd) small { display: none; }
+}

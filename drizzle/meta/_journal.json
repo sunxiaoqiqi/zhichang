@@ -15,6 +15,13 @@
       "when": 1785509326980,
       "tag": "0001_small_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785511178426,
+      "tag": "0002_high_dark_phoenix",
+      "breakpoints": true
     }
   ]
 }

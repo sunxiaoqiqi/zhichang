@@ -1,5 +1,6 @@
 "use client";
 import { useState, type FormEvent } from "react";
+import { getDeviceKey } from "../auth/device-client";
 
 export default function LoginPage() {
   const [error, setError] = useState("");
@@ -7,7 +8,7 @@ export default function LoginPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError("");
     const data = new FormData(event.currentTarget);
-    const response = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ account: data.get("account"), password: data.get("password") }) });
+    const response = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ account: data.get("account"), password: data.get("password"), deviceKey: getDeviceKey() }) });
     const result = await response.json() as { error?: string; user?: { role: string; mustChangePassword: boolean } };
     if (!response.ok) { setError(result.error ?? "登录失败"); setBusy(false); return; }
     window.location.href = result.user?.mustChangePassword ? "/change-password" : result.user?.role === "admin" ? "/admin" : "/";
