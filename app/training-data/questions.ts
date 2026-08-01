@@ -1,4 +1,6 @@
 import type { BranchingQuestion, DeepQuestion, SimpleQuestion, TrainingQuestion } from "./types";
+import { batch01Questions } from "./questions-batch-01";
+import { remainingQuestions } from "./questions-remaining";
 
 const course = (lessonNumber: number, lessonTitle: string, section: string) => ({
   lessonNumber, lessonTitle, section, href: `/lesson-${lessonNumber}` as `/lesson-${number}`,
@@ -147,4 +149,4 @@ const branchingQuestions: BranchingQuestion[] = [
   },
 ];
 
-export const trainingQuestions: TrainingQuestion[] = [...simpleQuestions, ...deepQuestions, ...branchingQuestions];
+export const trainingQuestions: TrainingQuestion[] = [...simpleQuestions, ...deepQuestions, ...branchingQuestions, ...batch01Questions, ...remainingQuestions];

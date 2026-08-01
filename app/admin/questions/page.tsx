@@ -54,8 +54,8 @@ export default function QuestionsAdmin() {
   );
   async function seed() {
     const r = await fetch("/api/admin/questions/seed", { method: "POST" });
-    const v = (await r.json()) as { error?: string; imported?: number };
-    setMessage(v.error ?? `已导入 ${v.imported} 道样题`);
+    const v = (await r.json()) as { error?: string; imported?: number; skipped?: number };
+    setMessage(v.error ?? `已新增 ${v.imported} 道，已有 ${v.skipped} 道保持不变`);
     await load();
   }
   async function importJson(file?: File) {
@@ -143,7 +143,7 @@ export default function QuestionsAdmin() {
             </button>
             <a href="/admin/questions/new">新建题目</a>
             <label className="questionImportButton">批量导入 JSON<input type="file" accept="application/json,.json" onChange={(event) => { void importJson(event.target.files?.[0]); event.target.value = ""; }} /></label>
-            <button onClick={seed}>导入现有样题</button>
+            <button onClick={seed}>同步源码题库</button>
           </div>
         </div>
         <section className="coverageStrip">
