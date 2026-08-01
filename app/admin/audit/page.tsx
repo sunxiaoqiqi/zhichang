@@ -6,7 +6,7 @@ import { AdminNav } from "../../components/admin-nav";
 type AuditRow = { id: string; actorAccount: string; action: string; targetAccount: string | null; detail: string; createdAt: string };
 type Pagination = { page: number; pageSize: number; total: number; pages: number };
 const actionLabels: Record<string, string> = {
-  "user.create": "创建用户", "user.reset": "重置密码", "user.toggle": "切换用户状态", "user.note": "修改用户备注", "user.account": "管理员修改账号名", "user.self_account": "用户修改账号名",
+  "user.create": "创建用户", "user.reset": "重置密码", "user.toggle": "切换用户状态", "user.note": "修改用户备注", "user.account": "管理员修改账号名", "user.self_account": "用户修改账号名", "user.access_plan": "切换用户版本",
   "question.create": "创建题目", "question.update": "修改题目", "question.delete": "删除题目", "question.seed": "导入样题", "question.bulk_import": "批量导入题目",
   "user.bulk_create": "批量创建用户",
   "device.note": "修改设备备注", "device.logout": "设备强制下线", "data.export": "导出数据",

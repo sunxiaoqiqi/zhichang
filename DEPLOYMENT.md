@@ -87,7 +87,7 @@ sudo systemctl restart zhichang
 curl --fail http://127.0.0.1:3000/api/health
 ```
 
-健康检查应返回 `status: ok` 和 `database: ok`。发布后还应分别完成一次普通用户和管理员登录测试。
+健康检查应返回 `status: ok`、`database: ok` 和当前版本号。发布后还应分别完成一次管理员、免费版用户和收费版用户登录测试，并验证第 2 课访问与训练额度限制。
 
 ## 备份
 

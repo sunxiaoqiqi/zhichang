@@ -36,7 +36,7 @@ export async function getCurrentUser() {
 
 export async function getUserBySessionToken(token?: string) {
   if (!token) return null;
-  const [row] = await getDb().select({ id: users.id, account: users.account, role: users.role, status: users.status, mustChangePassword: users.mustChangePassword })
+  const [row] = await getDb().select({ id: users.id, account: users.account, role: users.role, accessPlan: users.accessPlan, status: users.status, mustChangePassword: users.mustChangePassword })
     .from(authSessions).innerJoin(users, eq(authSessions.userId, users.id))
     .where(and(eq(authSessions.tokenHash, await hashToken(token)), gt(authSessions.expiresAt, new Date()), eq(users.status, "active"))).limit(1);
   return row ?? null;
@@ -51,6 +51,7 @@ export async function getCurrentSession() {
     id: users.id,
     account: users.account,
     role: users.role,
+    accessPlan: users.accessPlan,
     status: users.status,
     mustChangePassword: users.mustChangePassword,
   }).from(authSessions).innerJoin(users, eq(authSessions.userId, users.id))

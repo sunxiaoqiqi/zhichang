@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { assembleTrainingSession, sceneById, type BranchingQuestion, type DeepQuestion, type SimpleQuestion, type TrainingHistory, type TrainingQuestion } from "../training-data";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { sceneById, type BranchingQuestion, type DeepQuestion, type SimpleQuestion, type TrainingHistory, type TrainingQuestion } from "../training-data";
 
 type AnswerRecord = Record<string, string>;
 
@@ -13,15 +13,27 @@ export default function TrainingPage() {
   const [completed, setCompleted] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [sessionDone, setSessionDone] = useState(false);
+  const [runId, setRunId] = useState("");
+  const [plan, setPlan] = useState<"free" | "paid">("free");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<{ message: string; upgrade: boolean }>();
+  const submitting = useRef(new Set<string>());
 
   useEffect(() => {
     Promise.all([fetch("/api/training/questions"),fetch("/api/training/favorites")]).then(async ([questionResponse,favoriteResponse])=>{
-      if(!questionResponse.ok) throw new Error("question api unavailable");
-      const data=await questionResponse.json() as {questions:TrainingQuestion[];history:TrainingHistory};
+      const data=await questionResponse.json() as {questions?:TrainingQuestion[];history?:TrainingHistory;run?:{id:string;answeredQuestionIds:string[]};access?:{plan:"free"|"paid"};error?:string;code?:string};
+      if(!questionResponse.ok) throw Object.assign(new Error(data.error ?? "训练加载失败"), { code: data.code });
       const favoriteData=await favoriteResponse.json() as {favorites:string[]};
-      setQuestions(data.questions.length?assembleTrainingSession(data.history,Math.random,data.questions):[]);
+      const assigned = data.questions ?? [];
+      const answered = data.run?.answeredQuestionIds ?? [];
+      setQuestions(assigned);
+      setCompleted(answered);
+      setRunId(data.run?.id ?? "");
+      setPlan(data.access?.plan ?? "free");
+      const firstUnanswered = assigned.findIndex((question) => !answered.includes(question.id));
+      setActive(firstUnanswered >= 0 ? firstUnanswered : Math.max(0, assigned.length - 1));
       setFavorites(favoriteData.favorites??[]);
-    }).catch(()=>{try{const history=JSON.parse(window.localStorage.getItem("training-history")??"null") as TrainingHistory|null;setQuestions(assembleTrainingSession(history??undefined));setFavorites(JSON.parse(window.localStorage.getItem("training-favorites")??"[]"))}catch{setQuestions(assembleTrainingSession())}});
+    }).catch((reason: Error & {code?:string})=>setLoadError({message:reason.message,upgrade:reason.code==="FREE_TRAINING_EXHAUSTED"})).finally(()=>setLoading(false));
   }, []);
 
   const question = questions[active];
@@ -35,10 +47,14 @@ export default function TrainingPage() {
     void fetch("/api/training/favorites",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({questionId:question.id,favorite:!favorites.includes(question.id)})});
   };
 
-  const markComplete = (correct = true) => {
-    if (!question || completed.includes(question.id)) return;
-    setCompleted((value) => [...value, question.id]);
-    void fetch("/api/training/questions",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({questionId:question.id,primarySceneId:question.primarySceneId,correct})});
+  const markComplete = async (correct = true) => {
+    if (!question || completed.includes(question.id) || submitting.current.has(question.id)) return;
+    submitting.current.add(question.id);
+    const response = await fetch("/api/training/questions",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({runId,questionId:question.id,correct})});
+    const result = await response.json() as {error?:string};
+    submitting.current.delete(question.id);
+    if (!response.ok) { setLoadError({ message: result.error ?? "答题记录保存失败，请稍后重试", upgrade: response.status === 403 }); return; }
+    setCompleted((value) => value.includes(question.id) ? value : [...value, question.id]);
     try {
       const now = Date.now();
       const history = JSON.parse(window.localStorage.getItem("training-history") ?? "null") as TrainingHistory | null;
@@ -70,9 +86,10 @@ export default function TrainingPage() {
     else setSessionDone(true);
   };
 
-  if (!question) return <main className="trainingShell"><div className="trainingLoading">正在为你分配本次训练…</div></main>;
+  if (loadError) return <AccessPrompt message={loadError.message} upgrade={loadError.upgrade} />;
+  if (loading || !question) return <main className="trainingShell"><div className="trainingLoading">正在为你分配本次训练…</div></main>;
 
-  if (sessionDone) return <TrainingResult questions={questions} favorites={favorites} />;
+  if (sessionDone) return <TrainingResult questions={questions} favorites={favorites} plan={plan} />;
 
   const scene = sceneById[question.primarySceneId];
   const isFavorite = favorites.includes(question.id);
@@ -178,7 +195,11 @@ function CourseFeedback({ question, correct, summary }: { question: TrainingQues
   return <div className="courseFeedback"><span>{correct ? "本题完成" : "参考答案已解锁"}</span>{summary && <p>{summary}</p>}<div><small>对应知识点</small><strong>{question.courseReference.section}</strong><a href={question.courseReference.href}>查看第 {question.courseReference.lessonNumber} 课 →</a></div></div>;
 }
 
-function TrainingResult({ questions, favorites }: { questions: TrainingQuestion[]; favorites: string[] }) {
+function AccessPrompt({ message, upgrade }: { message: string; upgrade: boolean }) {
+  return <main className="accessPromptPage"><section className="accessPromptCard"><span>{upgrade ? "FREE PLAN LIMIT" : "TRAINING UNAVAILABLE"}</span><h1>{upgrade ? "免费训练额度已用完" : "暂时无法开始训练"}</h1><p>{message}</p><div>{upgrade && <a className="primary" href="/upgrade?reason=training">联系管理员开通收费版 →</a>}<a href="/">返回首页</a></div></section></main>;
+}
+
+function TrainingResult({ questions, favorites, plan }: { questions: TrainingQuestion[]; favorites: string[]; plan: "free" | "paid" }) {
   const scenes = useMemo(() => Array.from(new Set(questions.map((question) => question.primarySceneId))).map((id) => sceneById[id]), [questions]);
-  return <main className="trainingShell resultShell"><section className="trainingResult"><span>TRAINING COMPLETE</span><h1>本次 5 道训练已完成</h1><p>你覆盖了 {scenes.length} 个职场沟通场景。系统下次会优先分配未覆盖和薄弱场景。</p><div>{scenes.map((scene) => <article key={scene.id}><small>第 {scene.lessonNumber} 课</small><strong>{scene.title}</strong></article>)}</div><footer><span>本次收藏 {questions.filter((question) => favorites.includes(question.id)).length} 道</span><a href="/training">再练一次</a><a href="/">返回首页</a></footer></section></main>;
+  return <main className="trainingShell resultShell"><section className="trainingResult"><span>TRAINING COMPLETE</span><h1>本次 5 道训练已完成</h1><p>你覆盖了 {scenes.length} 个职场沟通场景。{plan === "paid" ? "系统下次会优先分配未覆盖和薄弱场景。" : "免费版体验已完成，开通收费版后可无限次训练。"}</p><div>{scenes.map((scene) => <article key={scene.id}><small>第 {scene.lessonNumber} 课</small><strong>{scene.title}</strong></article>)}</div><footer><span>本次收藏 {questions.filter((question) => favorites.includes(question.id)).length} 道</span>{plan === "paid" ? <a href="/training">再练一次</a> : <a href="/upgrade?reason=training">开通无限训练</a>}<a href="/">返回首页</a></footer></section></main>;
 }

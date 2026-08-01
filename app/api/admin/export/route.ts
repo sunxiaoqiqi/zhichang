@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   let filename = `zhichang-${type}-${new Date().toISOString().slice(0, 10)}.csv`;
   if (type === "users") {
     const rows = await db.select().from(users).orderBy(desc(users.createdAt));
-    content = csv(["用户唯一编号", "当前账号名", "角色", "状态", "是否需改密", "备注", "创建时间", "更新时间"], rows.map((row) => [row.id, row.account, row.role, row.status, row.mustChangePassword ? "是" : "否", row.note, date(row.createdAt), date(row.updatedAt)]));
+    content = csv(["用户唯一编号", "当前账号名", "角色", "版本", "状态", "是否需改密", "备注", "创建时间", "更新时间"], rows.map((row) => [row.id, row.account, row.role, row.accessPlan === "paid" || row.role === "admin" ? "收费版" : "免费版", row.status, row.mustChangePassword ? "是" : "否", row.note, date(row.createdAt), date(row.updatedAt)]));
   } else if (type === "devices") {
     const rows = await db.select({ userId: users.id, account: users.account, deviceKey: devices.deviceKey, deviceType: devices.deviceType, browser: devices.browser, os: devices.os, note: devices.note, firstSeenAt: devices.firstSeenAt, lastSeenAt: devices.lastSeenAt })
       .from(devices).innerJoin(users, eq(devices.userId, users.id)).orderBy(desc(devices.lastSeenAt));

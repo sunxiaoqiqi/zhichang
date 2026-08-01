@@ -97,3 +97,22 @@ test("V4 provides operations, exports, bulk management, and production checks", 
   assert.match(selfAccount, /verifyPassword/);
   assert.match(selfAccount, /user\.self_account/);
 });
+
+test("V5 enforces free and paid access with resumable training runs", async () => {
+  const sql = await read("drizzle/0004_aromatic_misty_knight.sql");
+  assert.match(sql, /CREATE TABLE `training_runs`/);
+  assert.match(sql, /`access_plan` text DEFAULT 'free' NOT NULL/);
+  const proxy = await read("proxy.ts");
+  assert.match(proxy, /canAccessLesson/);
+  assert.match(proxy, /\/upgrade/);
+  const training = await read("app/api/training/questions/route.ts");
+  assert.match(training, /FREE_TRAINING_EXHAUSTED/);
+  assert.match(training, /answeredQuestionIds/);
+  assert.match(training, /trainingRuns/);
+  const userActions = await read("app/api/admin/users\/[id]\/route.ts");
+  assert.match(userActions, /body\.action === "accessPlan"/);
+  assert.match(userActions, /user\.access_plan/);
+  const home = await read("app/page.tsx");
+  assert.match(home, /delete next\[Number\(key\)\]/);
+  for (const path of ["app/api/access/route.ts", "app/auth/access.ts", "app/upgrade/page.tsx"]) assert.ok((await read(path)).length > 100, `${path} should be implemented`);
+});

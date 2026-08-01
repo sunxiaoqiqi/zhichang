@@ -7,6 +7,7 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),
   passwordSalt: text("password_salt").notNull(),
   role: text("role", { enum: ["user", "admin"] }).notNull().default("user"),
+  accessPlan: text("access_plan", { enum: ["free", "paid"] }).notNull().default("free"),
   status: text("status", { enum: ["active", "disabled"] }).notNull().default("active"),
   mustChangePassword: integer("must_change_password", { mode: "boolean" }).notNull().default(true),
   note: text("note").notNull().default(""),
@@ -136,3 +137,13 @@ export const trainingAttempts = sqliteTable("training_attempts", {
   answerPayload: text("answer_payload").notNull().default("{}"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
 }, (table) => [index("training_attempts_user_idx").on(table.userId), index("training_attempts_question_idx").on(table.questionId)]);
+
+export const trainingRuns = sqliteTable("training_runs", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  questionIds: text("question_ids").notNull(),
+  answeredQuestionIds: text("answered_question_ids").notNull().default("[]"),
+  status: text("status", { enum: ["active", "completed"] }).notNull().default("active"),
+  startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
+  completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+}, (table) => [index("training_runs_user_idx").on(table.userId), index("training_runs_user_status_idx").on(table.userId, table.status)]);

@@ -75,8 +75,10 @@ export function CoursePlayer({
       window.localStorage.removeItem(`course-lesson-${lessonNumber}`);
     }
     fetch("/api/progress").then(async response => response.ok ? response.json() : null).then((data: { progress?: Array<{ lessonNumber: number; completed: number[]; unlocked: number }> } | null) => {
-      const remote = data?.progress?.find((item) => item.lessonNumber === lessonNumber);
-      if (remote) { setCompleted(remote.completed); setUnlocked(Math.min(remote.unlocked, steps.length - 1)); }
+      if (!data) return;
+      const remote = data.progress?.find((item) => item.lessonNumber === lessonNumber);
+      setCompleted(remote?.completed ?? []);
+      setUnlocked(Math.min(remote?.unlocked ?? 0, steps.length - 1));
     }).finally(() => setHydrated(true));
   }, [lessonNumber, steps.length]);
 

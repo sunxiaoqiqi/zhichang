@@ -3153,6 +3153,87 @@ button {
   }
 }
 
+/* Free / paid access control */
+.accessPlanBadge {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 8px !important;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+.accessPlanBadge.free { background: var(--blue-soft); color: #526b91; }
+.accessPlanBadge.paid { background: #fff3d8; border-color: #e4c982; color: #805f14; }
+.modeLocked { filter: saturate(.72); }
+.lessonLocked { background: #f3f1ec !important; color: var(--muted) !important; }
+.lessonLocked > span { background: #e5e2dc !important; color: #7d7d7a !important; font-size: 7px !important; }
+.lessonLocked:hover { border-color: #d3a75b !important; }
+.adminListToolbar.userListToolbar { grid-template-columns: minmax(220px, 1.7fr) minmax(120px, .8fr) minmax(120px, .8fr) auto; }
+.adminTable td i.freePlan { background: var(--blue-soft); color: #526b91; }
+.adminTable td button.planAction { background: var(--ink); border-color: var(--ink); color: white; }
+.accountMenu > i {
+  border-radius: 999px;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 900;
+  padding: 4px 7px;
+}
+.accountMenu > i.free { background: rgba(158, 184, 224, .18); color: #c9d9f1; }
+.accountMenu > i.paid { background: rgba(239, 199, 106, .18); color: var(--yellow); }
+.accountPlanCard { border: 1px solid var(--line); border-radius: 9px; display: grid; gap: 5px; padding: 12px; }
+.accountPlanCard.free { background: var(--blue-soft); }
+.accountPlanCard.paid { background: #fff3d8; border-color: #e4c982; }
+.accountPlanCard span { color: var(--muted); font-size: 8px; font-weight: 900; }
+.accountPlanCard strong { font-size: 11px; }
+.accountPlanCard a { color: var(--coral-dark); font-size: 9px; font-weight: 900; text-decoration: none; }
+.accessPromptPage,
+.upgradePage { align-items: center; background: radial-gradient(circle at 15% 12%, #fff7e5, transparent 34%), var(--paper); display: flex; justify-content: center; min-height: 100dvh; padding: 28px; }
+.accessPromptCard { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 24px 65px rgba(24,35,57,.1); max-width: 580px; padding: 45px; text-align: center; }
+.accessPromptCard > span,
+.upgradeIntro > small,
+.upgradeAlready > small { color: var(--coral-dark); font-size: 9px; font-weight: 900; letter-spacing: .13em; }
+.accessPromptCard h1,
+.upgradeIntro h1,
+.upgradeAlready h1 { font-family: Georgia, "Noto Serif SC", serif; font-size: clamp(30px, 4vw, 46px); margin: 10px 0 14px; }
+.accessPromptCard p,
+.upgradeIntro p,
+.upgradeAlready p { color: var(--muted); font-size: 12px; line-height: 1.8; }
+.accessPromptCard > div,
+.upgradeAlready > div { display: flex; gap: 9px; justify-content: center; margin-top: 26px; }
+.accessPromptCard a,
+.upgradeCard footer a,
+.upgradeAlready a { border: 1px solid var(--line); border-radius: 8px; color: var(--ink); font-size: 10px; font-weight: 900; padding: 12px 16px; text-decoration: none; }
+.accessPromptCard a.primary,
+.upgradeCard a.primary { background: var(--ink); border-color: var(--ink); color: white; }
+.upgradeCard { background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 28px 80px rgba(24,35,57,.11); max-width: 880px; overflow: hidden; padding: 30px; width: 100%; }
+.upgradeCard > header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding-bottom: 22px; }
+.upgradeCard > header > span { border-radius: 999px; font-size: 8px; font-weight: 900; padding: 7px 10px; }
+.upgradeCard > header > span.free { background: var(--blue-soft); color: #526b91; }
+.upgradeCard > header > span.paid { background: #fff3d8; color: #805f14; }
+.upgradeIntro { margin: 34px auto 24px; max-width: 650px; text-align: center; }
+.planCompare { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); margin: 24px 0; }
+.planCompare article { background: #f5f3ee; border: 1px solid var(--line); border-radius: 13px; padding: 22px; }
+.planCompare article.recommended { background: #fff7e5; border-color: #e0bd66; }
+.planCompare article > span,
+.contactAdmin > span { color: var(--coral-dark); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
+.planCompare h2 { font-family: Georgia, "Noto Serif SC", serif; font-size: 24px; margin: 7px 0 13px; }
+.planCompare ul { color: var(--muted); display: grid; font-size: 10px; gap: 10px; line-height: 1.55; margin: 0; padding-left: 18px; }
+.contactAdmin { background: var(--ink); border-radius: 13px; color: white; padding: 20px; }
+.contactAdmin > span { color: var(--yellow); }
+.contactAdmin > div { align-items: center; display: flex; justify-content: space-between; margin: 12px 0 7px; }
+.contactAdmin small { color: rgba(255,255,255,.6); font-size: 9px; }
+.contactAdmin strong { font: 700 14px Consolas, monospace; }
+.contactAdmin p { color: rgba(255,255,255,.68); font-size: 9px; margin: 0; }
+.upgradeCard > footer { display: flex; gap: 9px; justify-content: center; padding-top: 24px; }
+.upgradeAlready { padding: 70px 20px; text-align: center; }
+@media (max-width: 700px) {
+  .userListToolbar,
+  .planCompare { grid-template-columns: 1fr; }
+  .upgradeCard { padding: 20px; }
+  .contactAdmin > div { align-items: start; flex-direction: column; gap: 7px; }
+  .accessPromptCard { padding: 30px 22px; }
+  .accountMenu > i { display: none; }
+}
+
 /* V4 operations and audit */
 .auditToolbar {
   align-items: end;

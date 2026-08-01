@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserBySessionToken, SESSION_COOKIE } from "./app/auth/session";
+import { canAccessLesson } from "./app/auth/access";
 
 const publicPaths = ["/login", "/setup", "/api/auth/login", "/api/setup", "/api/health"];
 
@@ -21,6 +22,13 @@ export async function proxy(request: NextRequest) {
     return secured(NextResponse.redirect(target));
   }
   if (user.mustChangePassword && path !== "/change-password" && path !== "/api/auth/change-password" && path !== "/api/auth/logout") return secured(NextResponse.redirect(new URL("/change-password", request.url)));
+  const lesson = path.match(/^\/lesson-(\d+)$/);
+  if (lesson && !canAccessLesson(user, Number(lesson[1]))) {
+    const target = new URL("/upgrade", request.url);
+    target.searchParams.set("reason", "lesson");
+    target.searchParams.set("lesson", lesson[1]);
+    return secured(NextResponse.redirect(target));
+  }
   if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
     if (user.role !== "admin") return path.startsWith("/api/") ? secured(NextResponse.json({ error: "没有管理员权限" }, { status: 403 })) : secured(NextResponse.redirect(new URL("/", request.url)));
   }

@@ -18,11 +18,13 @@ const allLessons = phases.flatMap((phase, phaseIndex) => phase.lessons.map((titl
 })));
 
 type ProgressState = { completed?: number[]; finished?: boolean; updatedAt?: number };
+type AccessState = { plan: "free" | "paid"; lessonLimit: number; training: { limit: number | null; used: number; remaining: number | null; active: boolean } };
 
 export default function Home() {
   const [progress, setProgress] = useState<Record<number, ProgressState>>({});
   const [ready, setReady] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [access, setAccess] = useState<AccessState>();
 
   const readProgress = async () => {
     const next: Record<number, ProgressState> = {};
@@ -36,9 +38,17 @@ export default function Home() {
       const response = await fetch("/api/progress");
       if (response.ok) {
         const data = await response.json() as { progress: Array<{ lessonNumber: number; completed: number[]; finished: boolean; updatedAt: string }> };
+        for (const key of Object.keys(next)) delete next[Number(key)];
         for (const item of data.progress) next[item.lessonNumber] = { completed: item.completed, finished: item.finished, updatedAt: new Date(item.updatedAt).getTime() };
       }
     } catch { /* local progress remains available offline */ }
+    try {
+      const response = await fetch("/api/access");
+      if (response.ok) {
+        const data = await response.json() as { access: AccessState };
+        setAccess(data.access);
+      }
+    } catch { /* access checks remain enforced by the server */ }
     setProgress(next);
     setReady(true);
   };
@@ -65,14 +75,17 @@ export default function Home() {
   const percent = Math.round((completedCount / 26) * 100);
   const continueLesson = useMemo(() => {
     const unfinishedStarted = allLessons.find((lesson) => progress[lesson.number] && !progress[lesson.number].finished);
+    if (access?.plan !== "paid") return allLessons[0];
     if (unfinishedStarted) return unfinishedStarted;
     return allLessons.find((lesson) => !progress[lesson.number]?.finished) ?? allLessons[25];
-  }, [progress]);
+  }, [progress, access?.plan]);
+  const isPaid = access?.plan === "paid";
+  const trainingAvailable = isPaid || access?.training.active || (access?.training.remaining ?? 1) > 0;
 
   return <main className="courseHome oneScreenHome">
     <header className="homeTopbar">
       <a className="brand homeBrand" href="/"><span className="brandMark">61</span><span>职场沟通训练营</span></a>
-      <nav><span>26课 · 6阶段</span><button type="button" onClick={() => setMapOpen(true)}>查看全部课程</button></nav>
+      <nav><span className={`accessPlanBadge ${isPaid ? "paid" : "free"}`}>{isPaid ? "收费版" : "免费版"}</span><span>26课 · 6阶段</span><button type="button" onClick={() => setMapOpen(true)}>查看全部课程</button></nav>
     </header>
 
     <section className="modeOnlyHero">
@@ -93,17 +106,17 @@ export default function Home() {
           <div className="modeAreaHeading"><span>选择学习方式</span><p>系统学习课程，或按问题类型集中训练</p></div>
           <div className="modeOnlyCards">
             <a className="learningModeCard" href={`/lesson-${continueLesson.number}`}>
-          <header><span>01</span><small>{completedCount ? "继续上次进度" : "从第一课开始"}</small></header>
+          <header><span>01</span><small>{isPaid ? completedCount ? "继续上次进度" : "从第一课开始" : "免费试读第一课"}</small></header>
           <h1>学习模式</h1>
           <p>按课程路径学习判断原则、表达方法和真实场景。</p>
-          <div className="modeProgress"><span><b>{ready ? `${percent}%` : "—"}</b> · 已完成{completedCount}/26课</span><i><em style={{ width: `${percent}%` }} /></i></div>
+          <div className="modeProgress"><span><b>{ready ? `${percent}%` : "—"}</b> · {isPaid ? `已完成${completedCount}/26课` : "免费版仅开放第1课"}</span><i><em style={{ width: `${percent}%` }} /></i></div>
           <footer><div><small>接下来</small><b>第{continueLesson.number}课 · {continueLesson.title}</b></div><strong>继续学习 →</strong></footer>
             </a>
-            <a className="trainingModeCard" href="/training">
-          <header><span>02</span><small>每次随机 5 题</small></header>
+            <a className={`trainingModeCard ${trainingAvailable ? "" : "modeLocked"}`} href={trainingAvailable ? "/training" : "/upgrade?reason=training"}>
+          <header><span>02</span><small>{isPaid ? "无限次 · 每次随机 5 题" : trainingAvailable ? "免费体验 1 次" : "免费额度已用完"}</small></header>
           <h1>训练模式</h1>
           <p>快速判断、深度场景与连续套题，集中训练真实职场决策。</p>
-          <footer><span>系统智能组卷</span><strong>开始训练 →</strong></footer>
+          <footer><span>{trainingAvailable ? "系统智能组卷" : "联系管理员开通"}</span><strong>{trainingAvailable ? access?.training.active ? "继续训练 →" : "开始训练 →" : "开通收费版 →"}</strong></footer>
             </a>
           </div>
         </div>
@@ -121,7 +134,8 @@ export default function Home() {
                 const number = offset + index + 1;
                 const done = progress[number]?.finished;
                 const current = number === continueLesson.number;
-                return <a href={`/lesson-${number}`} key={title} className={`${done ? "lessonDone" : ""} ${current ? "lessonCurrent" : ""}`}><span>{done ? "✓" : number}</span><div><strong>{title}</strong><small>{done ? "已完成" : current ? "建议继续" : `第${number}课`}</small></div></a>;
+                const locked = !isPaid && number > 1;
+                return <a href={locked ? `/upgrade?reason=lesson&lesson=${number}` : `/lesson-${number}`} key={title} className={`${done ? "lessonDone" : ""} ${current ? "lessonCurrent" : ""} ${locked ? "lessonLocked" : ""}`}><span>{locked ? "锁" : done ? "✓" : number}</span><div><strong>{title}</strong><small>{locked ? "收费版解锁" : done ? "已完成" : current ? "建议继续" : `第${number}课`}</small></div></a>;
               })}
             </div></section>;
           })}
