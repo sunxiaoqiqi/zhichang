@@ -51,3 +51,38 @@ test("V3 records devices, login events, and effective activity sessions", async 
     "app/admin/analytics/page.tsx",
   ]) assert.ok((await read(path)).length > 100, `${path} should be implemented`);
 });
+
+test("V4 provides operations, exports, bulk management, and production checks", async () => {
+  for (const path of [
+    "app/admin/audit/page.tsx",
+    "app/api/admin/audit/route.ts",
+    "app/api/admin/export/route.ts",
+    "app/api/admin/users/import/route.ts",
+    "app/api/admin/questions/import/route.ts",
+    "app/api/auth/account/route.ts",
+    "app/account/page.tsx",
+    "app/api/health/route.ts",
+    "DEPLOYMENT.md",
+  ]) assert.ok((await read(path)).length > 100, `${path} should be implemented`);
+  const proxy = await read("proxy.ts");
+  for (const header of ["x-content-type-options", "x-frame-options", "referrer-policy", "permissions-policy"]) assert.ok(proxy.includes(header), `${header} should be set`);
+  const login = await read("app/api/auth/login/route.ts");
+  assert.match(login, /failures >= 10/);
+  assert.match(login, /retry-after/);
+  const exportRoute = await read("app/api/admin/export/route.ts");
+  assert.match(exportRoute, /data\.export/);
+  assert.match(exportRoute, /text\/csv/);
+  assert.match(exportRoute, /用户唯一编号/);
+  const userActions = await read("app/api/admin/users/[id]/route.ts");
+  assert.match(userActions, /body\.action === "account"/);
+  assert.match(userActions, /账号已被其他用户使用/);
+  const analytics = await read("app/api/admin/analytics/route.ts");
+  assert.match(analytics, /activeUserIds/);
+  assert.match(analytics, /accountAtLogin/);
+  const accountMigration = await read("drizzle/0003_narrow_madripoor.sql");
+  assert.match(accountMigration, /users_account_lower_unique/);
+  assert.match(accountMigration, /lower\("account"\)/);
+  const selfAccount = await read("app/api/auth/account/route.ts");
+  assert.match(selfAccount, /verifyPassword/);
+  assert.match(selfAccount, /user\.self_account/);
+});

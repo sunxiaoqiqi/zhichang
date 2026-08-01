@@ -1,6 +1,6 @@
 import { count } from "drizzle-orm";
 import { getDb } from "../../../../../db";
-import { questions, trainingScenes as sceneTable } from "../../../../../db/schema";
+import { adminAuditLogs, questions, trainingScenes as sceneTable } from "../../../../../db/schema";
 import { getCurrentUser } from "../../../../auth/session";
 import { trainingQuestions, trainingScenes } from "../../../../training-data";
 
@@ -12,6 +12,7 @@ export async function POST() {
     if (value) return Response.json({ error: "题库已有数据，不能重复导入" }, { status: 409 });
     for (const scene of trainingScenes) await getDb().insert(sceneTable).values({ id: scene.id, lessonNumber: scene.lessonNumber, title: scene.title, phase: scene.phase }).onConflictDoNothing();
     for (const item of trainingQuestions) await getDb().insert(questions).values({ id: item.id, title: item.title, kind: item.kind, primarySceneId: item.primarySceneId, difficulty: item.difficulty, status: item.status, payload: JSON.stringify(item), version: item.version });
+    await getDb().insert(adminAuditLogs).values({ id: crypto.randomUUID(), adminUserId: admin.id, action: "question.seed", detail: JSON.stringify({ imported: trainingQuestions.length }) });
     return Response.json({ imported: trainingQuestions.length });
   } catch (error) {
     const message = error instanceof Error ? error.message : "未知数据库错误";

@@ -5,6 +5,8 @@ import { getCurrentUser } from "../../../auth/session";
 import type { TrainingQuestion } from "../../../training-data";
 
 export async function GET() {
+  const admin = await getCurrentUser();
+  if (!admin || admin.role !== "admin") return Response.json({ error: "没有管理员权限" }, { status: 403 });
   const rows = await getDb().select().from(questions).orderBy(desc(questions.updatedAt));
   return Response.json({ questions: rows.map((row) => ({ ...row, payload: JSON.parse(row.payload) })) });
 }

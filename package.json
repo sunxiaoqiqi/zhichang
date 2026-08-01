@@ -14,7 +14,13 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0000_boring_starbolt.sql --config dist/server/wrangler.json --persist-to .wrangler/state",
     "db:migrate:v2:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0001_small_guardian.sql --config dist/server/wrangler.json --persist-to .wrangler/state",
-    "db:migrate:v3:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0002_high_dark_phoenix.sql --config dist/server/wrangler.json --persist-to .wrangler/state"
+    "db:migrate:v3:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0002_high_dark_phoenix.sql --config dist/server/wrangler.json --persist-to .wrangler/state",
+    "db:migrate:v4:local": "wrangler d1 execute site-creator-d1 --local --file=drizzle/0003_narrow_madripoor.sql --config dist/server/wrangler.json --persist-to .wrangler/state",
+    "db:backup:remote": "wrangler d1 export site-creator-d1 --remote --output zhichang-d1-backup.sql --config dist/server/wrangler.json",
+    "db:migrate:v1:remote": "wrangler d1 execute site-creator-d1 --remote --file=drizzle/0000_boring_starbolt.sql --config dist/server/wrangler.json",
+    "db:migrate:v2:remote": "wrangler d1 execute site-creator-d1 --remote --file=drizzle/0001_small_guardian.sql --config dist/server/wrangler.json",
+    "db:migrate:v3:remote": "wrangler d1 execute site-creator-d1 --remote --file=drizzle/0002_high_dark_phoenix.sql --config dist/server/wrangler.json",
+    "db:migrate:v4:remote": "wrangler d1 execute site-creator-d1 --remote --file=drizzle/0003_narrow_madripoor.sql --config dist/server/wrangler.json"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

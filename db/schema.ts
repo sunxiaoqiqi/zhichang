@@ -12,7 +12,10 @@ export const users = sqliteTable("users", {
   note: text("note").notNull().default(""),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`),
-}, (table) => [uniqueIndex("users_account_unique").on(table.account)]);
+}, (table) => [
+  uniqueIndex("users_account_unique").on(table.account),
+  uniqueIndex("users_account_lower_unique").on(sql`lower(${table.account})`),
+]);
 
 export const authSessions = sqliteTable("auth_sessions", {
   id: text("id").primaryKey(),

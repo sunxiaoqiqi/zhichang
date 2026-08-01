@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminNav } from "../../components/admin-nav";
 
 type DeviceRow = {
-  id: string; account: string; deviceKey: string; deviceType: string; browser: string; os: string; note: string;
+  id: string; userId: string; account: string; deviceKey: string; deviceType: string; browser: string; os: string; note: string;
   firstSeenAt: string; lastSeenAt: string; lastLoginAt: string | null; loginCount: number; activeSeconds: number; sessionCount: number;
 };
 
@@ -43,7 +43,7 @@ export default function DevicesPage() {
   return <main className="adminShell">
     <AdminNav active="devices" />
     <section className="adminMain">
-      <header><div><small>VERSION 3 · DEVICES</small><h1>设备管理</h1><p>按“账户 + 设备”识别使用终端，支持备注与强制下线。</p></div><strong>{rows.length} 台设备</strong></header>
+      <header><div><small>VERSION 3 · DEVICES</small><h1>设备管理</h1><p>按“账户 + 设备”识别使用终端，支持备注与强制下线。</p></div><div className="adminPageHeaderActions"><a className="adminHeaderAction" href="/api/admin/export?type=devices">导出设备 CSV</a><strong>{rows.length} 台设备</strong></div></header>
       <section className="adminMetrics compact">
         <article><small>覆盖账户</small><strong>{accountCount}</strong><span>已有设备记录的账户</span></article>
         <article><small>当前活跃</small><strong>{onlineCount}</strong><span>近 2 分钟收到心跳</span></article>
@@ -60,7 +60,7 @@ export default function DevicesPage() {
         {shown.map((row) => {
           const online = row.sessionCount > 0 && Date.now() - new Date(row.lastSeenAt).getTime() < 2 * 60 * 1000;
           return <tr key={row.id}>
-            <td><strong>{row.account}</strong><small><i className={`deviceDot ${online ? "online" : ""}`} />{typeLabel[row.deviceType] ?? "未知"} · {row.browser} · {row.os}</small><small title={row.deviceKey}>ID {row.deviceKey.slice(0, 8)}…</small></td>
+            <td><strong>{row.account}</strong><small title={row.userId}>用户编号 {row.userId.slice(0, 8)}…</small><small><i className={`deviceDot ${online ? "online" : ""}`} />{typeLabel[row.deviceType] ?? "未知"} · {row.browser} · {row.os}</small><small title={row.deviceKey}>设备编号 {row.deviceKey.slice(0, 8)}…</small></td>
             <td><strong>{row.loginCount} 次登录</strong><small>有效使用 {formatDuration(row.activeSeconds)}</small></td>
             <td><strong>{online ? "当前活跃" : formatTime(row.lastSeenAt)}</strong><small>首次：{formatTime(row.firstSeenAt)}</small></td>
             <td><input className="deviceNote" defaultValue={row.note} placeholder="例如：公司电脑" onBlur={(event) => { if (event.target.value !== row.note) void update(row.id, "note", event.target.value); }} /></td>

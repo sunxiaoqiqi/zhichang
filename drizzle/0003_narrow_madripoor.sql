@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `users_account_lower_unique` ON `users` (lower("account"));

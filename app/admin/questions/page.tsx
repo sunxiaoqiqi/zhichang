@@ -19,6 +19,9 @@ const labels = { simple: "简单题", deep: "深度场景", branching: "连续�
 export default function QuestionsAdmin() {
   const [rows, setRows] = useState<Row[]>([]);
   const [filter, setFilter] = useState("all");
+  const [sceneFilter, setSceneFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [showDeleted, setShowDeleted] = useState(false);
   const [editing, setEditing] = useState<Row>();
   const [json, setJson] = useState("");
@@ -31,11 +34,16 @@ export default function QuestionsAdmin() {
   useEffect(() => {
     load();
   }, []);
-  const shown = rows.filter((r) =>
-    showDeleted
-      ? r.status === "retired"
-      : r.status !== "retired" && (filter === "all" || r.kind === filter),
-  );
+  const filtered = rows.filter((r) => {
+    const keyword = search.trim().toLowerCase();
+    const statusMatch = showDeleted ? r.status === "retired" : r.status !== "retired";
+    return statusMatch && (filter === "all" || r.kind === filter) && (sceneFilter === "all" || r.primarySceneId === sceneFilter)
+      && (!keyword || `${r.title} ${r.id}`.toLowerCase().includes(keyword));
+  });
+  const pageSize = 10;
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const shown = filtered.slice((page - 1) * pageSize, page * pageSize);
+  useEffect(() => { setPage(1); }, [filter, sceneFilter, search, showDeleted]);
   const coverage = useMemo(
     () =>
       trainingScenes.map((s) => ({
@@ -49,6 +57,16 @@ export default function QuestionsAdmin() {
     const v = (await r.json()) as { error?: string; imported?: number };
     setMessage(v.error ?? `已导入 ${v.imported} 道样题`);
     await load();
+  }
+  async function importJson(file?: File) {
+    if (!file) return;
+    try {
+      const source = JSON.parse(await file.text()) as unknown;
+      const response = await fetch("/api/admin/questions/import", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(source) });
+      const result = await response.json() as { imported?: string[]; errors?: unknown[]; error?: string };
+      setMessage(result.error ?? `成功导入 ${result.imported?.length ?? 0} 道，跳过 ${result.errors?.length ?? 0} 道`);
+      if (response.ok) await load();
+    } catch { setMessage("无法读取 JSON 文件，请检查格式"); }
   }
   async function save() {
     if (!editing) return;
@@ -99,7 +117,7 @@ export default function QuestionsAdmin() {
             <h1>训练题管理</h1>
             <p>管理发布状态、题目内容与 26 个场景覆盖。</p>
           </div>
-          <strong>{rows.length} 道题</strong>
+          <div className="adminPageHeaderActions"><a className="adminHeaderAction" href="/api/admin/export?type=questions">导出题库 CSV</a><strong>{rows.length} 道题</strong></div>
         </header>
         {message && (
           <div className="adminMessage">
@@ -124,6 +142,7 @@ export default function QuestionsAdmin() {
               {showDeleted ? "返回题库" : `已删除 ${rows.filter((row) => row.status === "retired").length}`}
             </button>
             <a href="/admin/questions/new">新建题目</a>
+            <label className="questionImportButton">批量导入 JSON<input type="file" accept="application/json,.json" onChange={(event) => { void importJson(event.target.files?.[0]); event.target.value = ""; }} /></label>
             <button onClick={seed}>导入现有样题</button>
           </div>
         </div>
@@ -135,6 +154,7 @@ export default function QuestionsAdmin() {
             </div>
           ))}
         </section>
+        <section className="adminListToolbar questionListToolbar"><label><span>搜索题目</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="标题或题目 ID" /></label><label><span>主场景</span><select value={sceneFilter} onChange={(event) => setSceneFilter(event.target.value)}><option value="all">全部 26 个场景</option>{trainingScenes.map((scene) => <option value={scene.id} key={scene.id}>{scene.lessonNumber}. {scene.title}</option>)}</select></label><b>{filtered.length} 条结果</b></section>
         <div className="adminTable">
           <table>
             <thead>
@@ -170,9 +190,11 @@ export default function QuestionsAdmin() {
                   </td>
                 </tr>
               ))}
+              {!shown.length && <tr><td className="tableEmpty" colSpan={6}>没有符合条件的题目</td></tr>}
             </tbody>
           </table>
         </div>
+        {pages > 1 && <footer className="tablePagination"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>上一页</button><span>{page} / {pages}</span><button disabled={page === pages} onClick={() => setPage((value) => value + 1)}>下一页</button></footer>}
         {editing && (
           <div className="questionEditorBackdrop">
             <section className="questionEditor">

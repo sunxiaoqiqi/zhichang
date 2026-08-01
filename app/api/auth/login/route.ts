@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { and, count, eq, gte, sql } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { users } from "../../../../db/schema";
-import { describeRequestDevice, ensureDevice, recordLogin } from "../../../auth/device";
+import { loginEvents, users } from "../../../../db/schema";
+import { describeRequestDevice, describeRequestLocation, ensureDevice, recordLogin } from "../../../auth/device";
 import { verifyPassword } from "../../../auth/crypto";
 import { createSession } from "../../../auth/session";
 
@@ -11,7 +11,16 @@ export async function POST(request: Request) {
   const device = describeRequestDevice(request, body.deviceKey);
   if (!account || !body.password) return Response.json({ error: "请输入账号和密码" }, { status: 400 });
 
-  const [user] = await getDb().select().from(users).where(eq(users.account, account)).limit(1);
+  const location = describeRequestLocation(request);
+  const [{ failures }] = await getDb().select({ failures: count() }).from(loginEvents).where(and(
+    eq(loginEvents.account, account),
+    eq(loginEvents.ip, location.ip),
+    eq(loginEvents.success, false),
+    gte(loginEvents.occurredAt, new Date(Date.now() - 15 * 60 * 1000)),
+  ));
+  if (failures >= 10) return Response.json({ error: "尝试次数过多，请 15 分钟后再试" }, { status: 429, headers: { "retry-after": "900" } });
+
+  const [user] = await getDb().select().from(users).where(sql`lower(${users.account}) = lower(${account})`).limit(1);
   const valid = Boolean(user && user.status === "active" && await verifyPassword(body.password, user.passwordSalt, user.passwordHash));
   if (!valid || !user) {
     await recordLogin(request, { account, success: false, userId: user?.id, device });
@@ -19,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   const deviceId = await ensureDevice(user.id, device);
-  await recordLogin(request, { account, success: true, userId: user.id, deviceId, device });
+  await recordLogin(request, { account: user.account, success: true, userId: user.id, deviceId, device });
   await createSession(user.id, deviceId);
   return Response.json({ user: { account: user.account, role: user.role, mustChangePassword: user.mustChangePassword } });
 }

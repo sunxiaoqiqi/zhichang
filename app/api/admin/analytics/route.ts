@@ -25,6 +25,13 @@ export async function GET(request: Request) {
     id: loginEvents.id, userId: loginEvents.userId, deviceId: loginEvents.deviceId, account: loginEvents.account,
     success: loginEvents.success, location: loginEvents.location, ip: loginEvents.ip, occurredAt: loginEvents.occurredAt,
   }).from(loginEvents).where(rangeCondition(loginEvents.occurredAt, start, end)).orderBy(desc(loginEvents.occurredAt));
+  const currentUsers = await db.select({ id: users.id, account: users.account }).from(users);
+  const currentAccountMap = new Map(currentUsers.map((user) => [user.id, user.account]));
+  const displayEvents = eventRows.map((event) => ({
+    ...event,
+    accountAtLogin: event.account,
+    account: event.userId ? currentAccountMap.get(event.userId) ?? event.account : event.account,
+  }));
   const sessionRows = await db.select({
     id: activitySessions.id,
     deviceId: activitySessions.deviceId,
@@ -82,7 +89,7 @@ export async function GET(request: Request) {
   return Response.json({
     summary: { accounts: activeUserIds.size, devices: rollups.length, loginCount: successful.length, failedCount: eventRows.length - successful.length, activeSeconds },
     rollups,
-    events: eventRows.slice(0, 500),
+    events: displayEvents.slice(0, 500),
     sessions: sessionDetails.slice(0, 500),
     trend: [...trendMap.values()].sort((a, b) => a.date.localeCompare(b.date)),
   });

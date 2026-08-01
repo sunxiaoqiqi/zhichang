@@ -1,6 +1,6 @@
 "use client";
 
-type AdminSection = "users" | "devices" | "analytics" | "questions";
+type AdminSection = "users" | "devices" | "analytics" | "questions" | "audit";
 
 export function AdminNav({ active }: { active: AdminSection }) {
   return <aside className="adminNav">
@@ -13,6 +13,7 @@ export function AdminNav({ active }: { active: AdminSection }) {
       <a className={active === "devices" ? "active" : ""} href="/admin/devices">设备管理</a>
       <a className={active === "analytics" ? "active" : ""} href="/admin/analytics">数据分析</a>
       <a className={active === "questions" ? "active" : ""} href="/admin/questions">训练题管理</a>
+      <a className={active === "audit" ? "active" : ""} href="/admin/audit">操作审计</a>
     </nav>
     <button onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); location.href = "/login"; }}>退出登录</button>
   </aside>;

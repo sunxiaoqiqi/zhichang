@@ -1,10 +1,12 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { adminAuditLogs, users } from "../../../../db/schema";
 import { hashPassword, randomToken } from "../../../auth/crypto";
 import { getCurrentUser } from "../../../auth/session";
 
 export async function GET() {
+  const admin = await getCurrentUser();
+  if (!admin || admin.role !== "admin") return Response.json({ error: "没有管理员权限" }, { status: 403 });
   const rows = await getDb().select({ id: users.id, account: users.account, role: users.role, status: users.status, mustChangePassword: users.mustChangePassword, note: users.note, createdAt: users.createdAt, updatedAt: users.updatedAt }).from(users).orderBy(desc(users.createdAt));
   return Response.json({ users: rows });
 }
@@ -15,7 +17,7 @@ export async function POST(request: Request) {
   const { account, note = "", role = "user" } = await request.json() as { account?: string; note?: string; role?: "user" | "admin" };
   const normalized = account?.trim() ?? "";
   if (!/^[A-Za-z0-9_.-]{4,32}$/.test(normalized)) return Response.json({ error: "账号需为 4—32 位字母、数字或 ._-" }, { status: 400 });
-  const exists = await getDb().select({ id: users.id }).from(users).where(eq(users.account, normalized)).limit(1);
+  const exists = await getDb().select({ id: users.id }).from(users).where(sql`lower(${users.account}) = lower(${normalized})`).limit(1);
   if (exists.length) return Response.json({ error: "账号已存在" }, { status: 409 });
   const temporaryPassword = `Zc${randomToken(6)}9`;
   const secured = await hashPassword(temporaryPassword);
